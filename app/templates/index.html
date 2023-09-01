@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ギターコード（一部）認識アプリ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+    <div class="center-content">
+        <h1>ギターコード（一部）認識アプリ</h1>
+        <button id="start-btn">Start</button>
+    </div>
+    <audio id="metronome" src="/static/metronome.wav"></audio>
+    <div id="recording-indicator" style="display:none;">Recording...</div>
+    <div id="status"></div>
+    <div id="chord_name"></div>
+
+    <script>
+        document.getElementById("start-btn").addEventListener("click", () => {
+            const metronome = document.getElementById("metronome");
+            metronome.play();
+            metronome.onended = () => {
+                document.getElementById("recording-indicator").style.display = "block";
+                fetch('/start_recording')
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById("status").textContent = "Recording...";
+                        fetch('/upload')
+                            .then(response => response.json())
+                            .then(data => {
+                                document.getElementById("status").textContent = "Converting...";
+                                document.getElementById("recording-indicator").style.display = "none";
+                                document.getElementById("chord_name").textContent = "Recognized Chord: " + data.chord_name;
+                            })
+                            .catch((error) => {
+                                console.error('Error:', error);
+                            });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            };
+        });
+    </script>
+</body>
+
+</html>
