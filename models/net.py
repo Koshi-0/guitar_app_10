@@ -6,6 +6,11 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 import os
+import io
+
+# モデルの絶対パスを取得
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, '..', 'models', 'M7&m7.pt')
 
 # 学習済みモデルに合わせた前処理を追加
 transform = transforms.Compose([
@@ -61,13 +66,13 @@ def getName(label):
     return chord_names[label]
 
 # 推論
-def inference_cnn(img_path, model_path=os.path.join('..', 'models', 'M7&m7.pt')):
+def inference_cnn(img_data, model_path=MODEL_PATH):
     # モデルの初期化と読み込み
     net = Net().cpu().eval()
     net.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
 
     #　データの前処理
-    img = Image.open(img_path)
+    img = Image.open(io.BytesIO(img_data)).convert("RGB")
     img = transform(img)
     img = img.unsqueeze(0) # 1次元増やす
 

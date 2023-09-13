@@ -13,14 +13,20 @@
     <div class="center-content">
         <h1>ギターコード（一部）認識アプリ</h1>
         <button id="start-btn">Start</button>
+        <br>
+        <div id="recording-indicator" style="display:none; color: red;">Recording...</div>
+        <div id="status" style="color: red;"></div>
+        <div id="chord_name" style="color: blue;"></div>
     </div>
     <audio id="metronome" src="/static/metronome.wav"></audio>
-    <div id="recording-indicator" style="display:none;">Recording...</div>
-    <div id="status"></div>
-    <div id="chord_name"></div>
 
     <script>
         document.getElementById("start-btn").addEventListener("click", () => {
+            // 前回の結果をクリア
+            document.getElementById("chord_name").textContent = "";
+            document.getElementById("status").textContent = "";
+            document.getElementById("recording-indicator").style.display = "none";
+
             const metronome = document.getElementById("metronome");
             metronome.play();
             metronome.onended = () => {
@@ -28,17 +34,28 @@
                 fetch('/start_recording')
                     .then(response => response.json())
                     .then(data => {
-                        document.getElementById("status").textContent = "Recording...";
-                        fetch('/upload')
-                            .then(response => response.json())
-                            .then(data => {
-                                document.getElementById("status").textContent = "Converting...";
-                                document.getElementById("recording-indicator").style.display = "none";
-                                document.getElementById("chord_name").textContent = "Recognized Chord: " + data.chord_name;
+                        if (data.status === 'done') {
+                            document.getElementById("status").textContent = "Recording...";
+                            // ここで POST リクエストを使ってオーディオデータを送信
+                            fetch('/upload', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ audio_data: data.audio_data })
                             })
-                            .catch((error) => {
-                                console.error('Error:', error);
-                            });
+                                .then(response => response.json())
+                                .then(data => {
+                                    document.getElementById("status").textContent = "Converting...";
+                                    document.getElementById("recording-indicator").style.display = "none";
+                                    document.getElementById("chord_name").textContent = "Recognized Chord: " + data.chord_name;
+                                })
+                                .catch((error) => {
+                                    console.error('Error:', error);
+                                });
+                        } else {
+                            console.error('Recording error:', data.message);
+                        }
                     })
                     .catch(error => {
                         console.error('Error:', error);
