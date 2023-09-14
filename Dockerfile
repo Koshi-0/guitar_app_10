@@ -1,11 +1,13 @@
 # ベースとなるイメージを選択
 FROM python:3.9-slim
 
-# 必要なパッケージをインストール
-RUN apt-get update && apt-get install -y portaudio19-dev libsndfile1 && apt-get clean
-
 # ワーキングディレクトリを設定
 WORKDIR /app
+
+# 必要なパッケージをインストール
+RUN apt-get update && \
+    apt-get install -y portaudio19-dev libsndfile1 gcc libportaudio2 && \
+    apt-get clean
 
 # 依存関係をコピーしてインストール
 COPY requirements.txt .
